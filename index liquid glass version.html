@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyWebsite</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0a0a0a;
+      --bg2:     #111111;
+      --bg3:     #161616;
+      --border:  #222222;
+      --gold:    #c9a84c;
+      --gold-lt: #e0c070;
+      --muted:   #555555;
+      --text:    #e8e4dc;
+      --text-dim:#888880;
+      --white:   #f5f2ec;
+      --serif:   'Cormorant Garamond', Georgia, serif;
+      --sans:    'DM Sans', sans-serif;
+      --ease:    cubic-bezier(0.16, 1, 0.3, 1);
+
+      /* Glass variables */
+      --glass-bg:     rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-shine:  rgba(255, 255, 255, 0.10);
+      --glass-shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    /* ── LIGHT MODE */
+    body.light {
+      --bg:      #f5f0e8;
+      --bg2:     #ece5d6;
+      --bg3:     #e2d9c6;
+      --border:  #d4c9b0;
+      --gold:    #b8954a;
+      --gold-lt: #d4b06a;
+      --muted:   #7a7060;
+      --text:    #1a1710;
+      --text-dim:#6b6458;
+      --white:   #fdfaf5;
+
+      --glass-bg:     rgba(255, 255, 255, 0.35);
+      --glass-border: rgba(255, 255, 255, 0.55);
+      --glass-shine:  rgba(255, 255, 255, 0.70);
+      --glass-shadow: rgba(0, 0, 0, 0.12);
+    }
+
+    /* ── THEME TOGGLE BUTTON — liquid glass */
+    #themeToggle {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 1000;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 8px 32px var(--glass-shadow),
+        inset 0 1px 0 var(--glass-shine),
+        inset 0 -1px 0 rgba(0,0,0,0.15);
+      color: var(--gold); font-size: 1.2rem;
+      cursor: none; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.3s var(--ease), box-shadow 0.3s, background 0.3s;
+    }
+    #themeToggle:hover {
+      background: rgba(201,168,76,0.18);
+      transform: scale(1.1);
+      box-shadow: 0 12px 40px rgba(201,168,76,0.25), inset 0 1px 0 var(--glass-shine);
+    }
+
+    /* ── PAGE TRANSITION */
+    #page-transition {
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--gold);
+      transform: translateY(100%);
+      pointer-events: none;
+    }
+    #page-transition.slide-in  { animation: slideIn  0.5s var(--ease) forwards; }
+    #page-transition.slide-out { animation: slideOut 0.5s var(--ease) forwards; }
+
+    @keyframes slideIn {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0%); }
+    }
+    @keyframes slideOut {
+      from { transform: translateY(0%); }
+      to   { transform: translateY(-100%); }
+    }
+
+    body, nav, footer, .card, .stats-section, .marquee-strip, .carousel-section {
+      transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+    }
+
+    html { scroll-behavior: smooth; overflow-x: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      cursor: none;
+      overflow-x: hidden;
+    }
+
+    /* ── CURSOR */
+    #cursor {
+      width: 10px; height: 10px;
+      background: var(--gold);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: transform 0.1s, width 0.3s var(--ease), height 0.3s var(--ease), background 0.3s;
+    }
+    #cursor.expand { width: 40px; height: 40px; background: transparent; border: 1.5px solid var(--gold); }
+
+    /* ── ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── NAVBAR — liquid glass */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: rgba(10, 10, 10, 0.25);
+      backdrop-filter: blur(28px) saturate(180%) brightness(1.1);
+      -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.1);
+      border-bottom: 1px solid var(--glass-border);
+      box-shadow:
+        0 1px 0 var(--glass-shine),
+        0 8px 32px rgba(0,0,0,0.2);
+      animation: fadeIn 0.6s var(--ease) both;
+    }
+    body.light nav {
+      background: rgba(245, 240, 232, 0.4);
+    }
+
+    .nav-brand {
+      font-family: var(--serif);
+      font-size: 1.5rem; font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--white);
+      text-decoration: none;
+      position: relative;
+    }
+    .nav-brand::after {
+      content: '';
+      position: absolute; bottom: -2px; left: 0;
+      width: 100%; height: 1px;
+      background: var(--gold);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.4s var(--ease);
+    }
+    .nav-brand:hover::after { transform: scaleX(1); }
+
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none;
+      position: relative; transition: color 0.3s;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -3px; left: 0;
+      width: 0; height: 1px; background: var(--gold);
+      transition: width 0.3s var(--ease);
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-links a:hover::after { width: 100%; }
+
+    /* Nav CTA — glass pill */
+    .nav-cta {
+      font-size: 0.75rem !important; letter-spacing: 0.12em !important;
+      color: var(--gold) !important;
+      background: rgba(201,168,76,0.12) !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(201,168,76,0.3) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+      padding: 0.5rem 1.4rem; border-radius: 20px;
+      text-decoration: none;
+      transition: background 0.3s, box-shadow 0.3s !important;
+    }
+    .nav-cta:hover {
+      background: rgba(201,168,76,0.25) !important;
+      color: var(--gold-lt) !important;
+      box-shadow: 0 4px 20px rgba(201,168,76,0.2), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+    }
+    .nav-cta::after { display: none !important; }
+
+    .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: none; padding: 4px; }
+    .hamburger span { display: block; width: 24px; height: 1.5px; background: var(--text); transition: 0.3s; }
+
+    /* ── HERO */
+    .hero {
+      position: relative;
+      height: 88vh; min-height: 560px;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: url('https://picsum.photos/seed/hero2024/1600/900') center/cover no-repeat;
+      filter: brightness(0.25) saturate(0.6);
+      transform: scale(1.05);
+      transition: transform 8s ease;
+    }
+    .hero:hover .hero-bg { transform: scale(1); }
+
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.2) 100%);
+    }
+
+    .hero-grain {
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 1;
+    }
+
+    .hero-content {
+      position: absolute; bottom: 4rem; left: 3rem;
+      max-width: 720px; z-index: 2;
+    }
+
+    /* Hero tag — liquid glass pill */
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(201,168,76,0.10);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      border: 1px solid rgba(201,168,76,0.25);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.2);
+      padding: 0.3rem 0.9rem; border-radius: 20px;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.7s 0.2s var(--ease) both;
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(3rem, 7vw, 6rem);
+      font-weight: 300; line-height: 1.05;
+      color: var(--white);
+      animation: fadeUp 0.8s 0.4s var(--ease) both;
+    }
+    .hero h1 em { font-style: italic; color: var(--gold-lt); }
+
+    .hero-desc {
+      margin-top: 1.5rem; font-size: 1rem;
+      color: rgba(232,228,220,0.55);
+      max-width: 480px; line-height: 1.7;
+      animation: fadeUp 0.8s 0.6s var(--ease) both;
+    }
+
+    .hero-actions {
+      display: flex; gap: 1rem; margin-top: 2.5rem;
+      animation: fadeUp 0.8s 0.8s var(--ease) both;
+    }
+
+    .btn-primary-hero {
+      font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+      background: var(--gold); color: var(--bg);
+      padding: 0.85rem 2rem; border: none; border-radius: 24px;
+      text-decoration: none; font-family: var(--sans); font-weight: 500;
+      box-shadow: 0 4px 24px rgba(201,168,76,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+    }
+    .btn-primary-hero:hover {
+      background: var(--gold-lt); transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(201,168,76,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+
+    /* Ghost button — liquid glass */
+    .btn-ghost-hero {
+      font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      color: var(--white);
+      padding: 0.85rem 2rem;
+      border: 1px solid rgba(232,228,220,0.15);
+      border-radius: 24px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.2);
+      text-decoration: none; font-family: var(--sans);
+      transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+    }
+    .btn-ghost-hero:hover {
+      border-color: rgba(201,168,76,0.4);
+      background: rgba(201,168,76,0.10);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    .scroll-hint {
+      position: absolute; bottom: 2rem; right: 3rem; z-index: 2;
+      display: flex; align-items: center; gap: 0.6rem;
+      color: rgba(232,228,220,0.3);
+      font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+      animation: fadeIn 1.2s 1.2s both;
+    }
+    .scroll-hint::before {
+      content: ''; display: block; width: 40px; height: 1px;
+      background: rgba(232,228,220,0.2);
+    }
+
+    /* ── MARQUEE */
+    .marquee-strip {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0; overflow: hidden;
+    }
+    .marquee-track { display: flex; animation: marqueeAnim 22s linear infinite; white-space: nowrap; }
+    @keyframes marqueeAnim {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .marquee-item { font-family: var(--serif); font-size: 0.9rem; letter-spacing: 0.12em; color: var(--gold); padding: 0 3rem; flex-shrink: 0; }
+    .marquee-sep { color: var(--muted); }
+
+    /* ── SECTIONS */
+    section { padding: 5rem 3rem; }
+
+    .section-label {
+      font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--gold); display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .section-label::after { content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--gold); }
+
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 300; line-height: 1.15; color: var(--white);
+    }
+
+    /* ── CAROUSEL */
+    .carousel-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+    .carousel-wrapper {
+      position: relative; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6); margin-top: 3rem;
+      border: 1px solid var(--glass-border);
+    }
+
+    .carousel-track { display: flex; transition: transform 0.7s var(--ease); }
+    .carousel-slide { min-width: 100%; position: relative; }
+    .carousel-slide img { width: 100%; height: 500px; object-fit: cover; display: block; filter: brightness(0.6) saturate(0.7); }
+
+    .carousel-slide-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(10,10,10,0.85) 0%, transparent 55%);
+    }
+
+    /* Carousel caption — liquid glass card */
+    .carousel-caption-custom {
+      position: absolute; bottom: 2.5rem; left: 3rem;
+      color: var(--white);
+      background: rgba(10,10,10,0.3);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.10),
+        0 8px 32px rgba(0,0,0,0.3);
+      padding: 1.2rem 1.8rem;
+      border-radius: 12px;
+      max-width: 380px;
+    }
+    .carousel-caption-custom h3 { font-family: var(--serif); font-size: 2rem; font-weight: 300; }
+    .carousel-caption-custom p { font-size: 0.9rem; color: rgba(232,228,220,0.55); margin-top: 0.4rem; }
+
+    /* Carousel nav — liquid glass buttons */
+    .carousel-nav {
+      position: absolute; top: 50%; right: 2rem;
+      transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 0.5rem; z-index: 5;
+    }
+    .carousel-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1px solid rgba(201,168,76,0.25);
+      background: rgba(10,10,10,0.35);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.3);
+      color: var(--text); font-size: 1.1rem;
+      cursor: none; display: flex; align-items: center; justify-content: center;
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    .carousel-btn:hover {
+      background: rgba(201,168,76,0.25);
+      border-color: rgba(201,168,76,0.5);
+      color: var(--gold);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px rgba(201,168,76,0.2);
+    }
+
+    .carousel-dots { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border); cursor: none;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .dot.active { background: var(--gold); transform: scale(1.4); }
+
+    /* ── STATS — liquid glass cards */
+    .stats-section {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 4rem 3rem;
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; text-align: center; }
+
+    .stat-item {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 2rem 1rem;
+      box-shadow:
+        inset 0 1px 0 var(--glass-shine),
+        inset 0 -1px 0 rgba(0,0,0,0.1),
+        0 8px 32px var(--glass-shadow);
+      transition: transform 0.3s var(--ease), box-shadow 0.3s;
+    }
+    .stat-item:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        inset 0 1px 0 var(--glass-shine),
+        0 16px 48px var(--glass-shadow),
+        0 0 0 1px rgba(201,168,76,0.15);
+    }
+
+    .stat-num {
+      font-family: var(--serif); font-size: 3.5rem; font-weight: 300;
+      color: var(--white); line-height: 1;
+      background: linear-gradient(90deg, var(--gold), var(--gold-lt), var(--gold));
+      background-size: 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: shimmer 4s linear infinite;
+    }
+    .stat-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 0.5rem; }
+
+    /* ── CARDS — liquid glass */
+    .cards-section { background: var(--bg); }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        inset 0 1px 0 var(--glass-shine),
+        0 8px 32px var(--glass-shadow);
+      transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease), border-color 0.4s;
+      position: relative;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.4s var(--ease); z-index: 2;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow:
+        inset 0 1px 0 var(--glass-shine),
+        0 24px 56px var(--glass-shadow),
+        0 0 0 1px rgba(201,168,76,0.2);
+      border-color: rgba(201,168,76,0.2);
+    }
+    .card:hover::before { transform: scaleX(1); }
+
+    .card-img-wrap { overflow: hidden; height: 220px; }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.65) saturate(0.6); transition: transform 0.6s var(--ease), filter 0.6s; }
+    .card:hover .card-img-wrap img { transform: scale(1.08); filter: brightness(0.75) saturate(0.8); }
+
+    .card-body { padding: 1.8rem; }
+    .card-number { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; }
+    .card-title { font-family: var(--serif); font-size: 1.5rem; font-weight: 300; line-height: 1.2; color: var(--white); margin-bottom: 0.8rem; }
+    .card-text { font-size: 0.88rem; color: var(--text-dim); line-height: 1.7; }
+    .card-link {
+      display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.4rem;
+      font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--gold); text-decoration: none; transition: gap 0.3s;
+    }
+    .card-link:hover { gap: 0.9rem; }
+    .card-link::after { content: '→'; }
+
+    /* ── FOOTER — liquid glass */
+    footer {
+      background: rgba(10,10,10,0.6);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border-top: 1px solid var(--glass-border);
+      box-shadow: inset 0 1px 0 var(--glass-shine);
+      color: var(--muted);
+      padding: 3rem; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    body.light footer {
+      background: rgba(245, 240, 232, 0.5);
+    }
+    .footer-brand { font-family: var(--serif); font-size: 1.4rem; color: var(--white); }
+    .footer-links { display: flex; gap: 2rem; list-style: none; }
+    .footer-links a { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.3s; }
+    .footer-links a:hover { color: var(--gold); }
+    .footer-copy { font-size: 0.72rem; letter-spacing: 0.1em; }
+
+    /* ── MOBILE */
+    @media (max-width: 768px) {
+      nav { padding: 0 1.5rem; }
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex; flex-direction: column;
+        position: fixed; inset: 64px 0 0;
+        background: rgba(10,10,10,0.85);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        padding: 3rem 2rem;
+        gap: 1.5rem; z-index: 99;
+        border-top: 1px solid var(--glass-border);
+      }
+      .nav-links.open a { font-size: 1.1rem; }
+      .hamburger { display: flex; }
+      .hero-content { left: 1.5rem; bottom: 2.5rem; }
+      section { padding: 3.5rem 1.5rem; }
+      .carousel-slide img { height: 320px; }
+      .carousel-caption-custom { left: 1.5rem; bottom: 1.5rem; }
+      .carousel-nav { right: 1rem; }
+      footer { flex-direction: column; text-align: center; padding: 2rem 1.5rem; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
+      .scroll-hint { right: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="page-transition"></div>
+  <button id="themeToggle" aria-label="Toggle theme">🌙</button>
+  <div id="cursor"></div>
+
+  <!-- NAVBAR -->
+  <nav>
+    <a class="nav-brand" href="#">MW</a>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#">Home</a></li>
+      <li><a href="#featured">Features</a></li>
+      <li><a href="#stats">Stats</a></li>
+      <li><a href="#stories">Stories</a></li>
+      <li><a href="#contact" class="nav-cta">Get Started</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-grain"></div>
+    <div class="hero-content">
+      <div class="hero-tag">Est. 2026 &mdash; Excellence in Design</div>
+      <h1>Crafted for<br><em>those who notice</em><br>the details.</h1>
+      <p class="hero-desc">A curated digital experience where aesthetics meet function. Discover content that moves, inspires, and endures.</p>
+      <div class="hero-actions">
+        <a href="#" class="btn-primary-hero">Explore Now</a>
+        <a href="#" class="btn-ghost-hero">Learn More</a>
+      </div>
+    </div>
+    <div class="scroll-hint">Scroll to discover</div>
+  </div>
+
+  <!-- MARQUEE -->
+  <div class="marquee-strip">
+    <div class="marquee-track">
+      <span class="marquee-item">Premium Design <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Refined Aesthetics <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Timeless Quality <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Modern Elegance <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Curated Content <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Premium Design <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Refined Aesthetics <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Timeless Quality <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Modern Elegance <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Curated Content <span class="marquee-sep">✦</span></span>
+    </div>
+  </div>
+
+  <!-- CAROUSEL -->
+  <section class="carousel-section reveal" id="featured">
+    <div class="section-label">Featured</div>
+    <h2 class="section-title">Highlights of the<br><em style="font-style:italic; color:var(--gold);">season</em></h2>
+    <div class="carousel-wrapper">
+      <div class="carousel-track" id="track">
+        <div class="carousel-slide">
+          <img src="https://picsum.photos/seed/slide-a/1400/500" alt="Slide 1">
+          <div class="carousel-slide-overlay"></div>
+          <div class="carousel-caption-custom">
+            <h3>The Art of Discovery</h3>
+            <p>Unveiling what matters most to the modern explorer.</p>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://picsum.photos/seed/slide-b/1400/500" alt="Slide 2">
+          <div class="carousel-slide-overlay"></div>
+          <div class="carousel-caption-custom">
+            <h3>Beyond the Surface</h3>
+            <p>Depth and craft in every detail we present.</p>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://picsum.photos/seed/slide-c/1400/500" alt="Slide 3">
+          <div class="carousel-slide-overlay"></div>
+          <div class="carousel-caption-custom">
+            <h3>Vision &amp; Purpose</h3>
+            <p>Where intention shapes every single experience.</p>
+          </div>
+        </div>
+      </div>
+      <div class="carousel-nav">
+        <button class="carousel-btn" id="prevBtn">&#8593;</button>
+        <button class="carousel-btn" id="nextBtn">&#8595;</button>
+      </div>
+    </div>
+    <div class="carousel-dots" id="dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-section reveal" id="stats">
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-num">12K</div><div class="stat-label">Happy Users</div></div>
+      <div class="stat-item"><div class="stat-num">98%</div><div class="stat-label">Satisfaction Rate</div></div>
+      <div class="stat-item"><div class="stat-num">5★</div><div class="stat-label">Average Rating</div></div>
+      <div class="stat-item"><div class="stat-num">3+</div><div class="stat-label">Years of Excellence</div></div>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <section class="cards-section reveal" id="stories">
+    <div class="section-label">Stories</div>
+    <h2 class="section-title">Carefully curated<br><em style="font-style:italic;">for you</em></h2>
+    <div class="cards-grid">
+      <div class="card reveal">
+        <div class="card-img-wrap"><img src="https://picsum.photos/seed/card-x/600/400" alt="Article 1"></div>
+        <div class="card-body">
+          <div class="card-number">01 &mdash; Design</div>
+          <h3 class="card-title">The Language of Silence in Modern Space</h3>
+          <p class="card-text">How restraint and empty space become the loudest elements of a truly memorable experience.</p>
+          <a href="#" class="card-link">Read More</a>
+        </div>
+      </div>
+      <div class="card reveal">
+        <div class="card-img-wrap"><img src="https://picsum.photos/seed/card-y/600/400" alt="Article 2"></div>
+        <div class="card-body">
+          <div class="card-number">02 &mdash; Culture</div>
+          <h3 class="card-title">Texture, Material &amp; the Stories Objects Tell</h3>
+          <p class="card-text">An exploration of how craftsmanship and material choice communicate values across generations.</p>
+          <a href="#" class="card-link">Read More</a>
+        </div>
+      </div>
+      <div class="card reveal">
+        <div class="card-img-wrap"><img src="https://picsum.photos/seed/card-z/600/400" alt="Article 3"></div>
+        <div class="card-body">
+          <div class="card-number">03 &mdash; Living</div>
+          <h3 class="card-title">Rituals That Anchor the Wandering Mind</h3>
+          <p class="card-text">Small habits, intentionally practiced, that create a life of calm purpose and lasting beauty.</p>
+          <a href="#" class="card-link">Read More</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="footer-brand">MyWebsite</div>
+    <ul class="footer-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Features</a></li>
+      <li><a href="#">Pricing</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+    <div class="footer-copy">&copy; 2026 MyWebsite. All rights reserved.</div>
+  </footer>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', e => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top  = e.clientY + 'px';
+    });
+    document.querySelectorAll('a, button, .card, .dot').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('expand'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('expand'));
+    });
+
+    const hamburger = document.getElementById('hamburger');
+    const navLinks  = document.getElementById('navLinks');
+    hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
+
+    const track = document.getElementById('track');
+    const dots  = document.querySelectorAll('.dot');
+    let current = 0, total = 3, timer;
+
+    function goTo(n) {
+      current = (n + total) % total;
+      track.style.transform = `translateX(-${current * 100}%)`;
+      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', () => goTo(current + 1));
+    document.getElementById('prevBtn').addEventListener('click', () => goTo(current - 1));
+    dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+
+    function startAuto() { timer = setInterval(() => goTo(current + 1), 5000); }
+    function stopAuto()  { clearInterval(timer); }
+    track.parentElement.addEventListener('mouseenter', stopAuto);
+    track.parentElement.addEventListener('mouseleave', startAuto);
+    startAuto();
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+      document.body.classList.add('light');
+      themeToggle.textContent = '☀️';
+    }
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      const isLight = document.body.classList.contains('light');
+      themeToggle.textContent = isLight ? '☀️' : '🌙';
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+    themeToggle.addEventListener('mouseenter', () => cursor.classList.add('expand'));
+    themeToggle.addEventListener('mouseleave', () => cursor.classList.remove('expand'));
+
+    const overlay = document.getElementById('page-transition');
+    overlay.classList.add('slide-in');
+    setTimeout(() => {
+      overlay.classList.remove('slide-in');
+      overlay.classList.add('slide-out');
+      setTimeout(() => overlay.classList.remove('slide-out'), 500);
+    }, 100);
+
+    document.querySelectorAll('a[href]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href || href === '#' || href.startsWith('#')) return;
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        overlay.classList.remove('slide-out');
+        overlay.classList.add('slide-in');
+        setTimeout(() => { window.location.href = href; }, 500);
+      });
+    });
+  </script>
+</body>
+</html>
